@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM 협업 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0d0d0f;color:#f0f0f2;font-family:"DM Sans",sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- localStorage 기반 storage polyfill (GitHub Pages용) -->
+<script>
+window.storage = {
+  get: function(key, shared) {
+    return new Promise(function(resolve) {
+      try {
+        var k = (shared ? 'shared_' : 'local_') + key;
+        var val = localStorage.getItem(k);
+        resolve(val !== null ? { key: key, value: val, shared: !!shared } : null);
+      } catch(e) { resolve(null); }
+    });
+  },
+  set: function(key, value, shared) {
+    return new Promise(function(resolve) {
+      try {
+        var k = (shared ? 'shared_' : 'local_') + key;
+        localStorage.setItem(k, value);
+        resolve({ key: key, value: value, shared: !!shared });
+      } catch(e) { resolve(null); }
+    });
+  },
+  delete: function(key, shared) {
+    return new Promise(function(resolve) {
+      try {
+        var k = (shared ? 'shared_' : 'local_') + key;
+        localStorage.removeItem(k);
+        resolve({ key: key, deleted: true });
+      } catch(e) { resolve(null); }
+    });
+  }
+};
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.3/babel.min.js"></script>
+
+<script type="text/babel">
+const {useState, useEffect, useRef} = React;
+
+
+const C={bg:"#0d0d0f",bg2:"#141416",bg3:"#1a1a1e",bg4:"#222228",border:"rgba(255,255,255,0.07)",border2:"rgba(255,255,255,0.12)",text:"#f0f0f2",muted:"#8a8a99",faint:"#4a4a58",accent:"#c8f04a",accent2:"#7b6ef6",accent3:"#f06a6a",accent4:"#4af0c8"};
+const PCOLS=["#c8f04a","#7b6ef6","#4af0c8","#f0c44a","#f06a6a","#e879f9","#38bdf8"];
+const PHICONS=["📋","🎨","⚙️","🧪","🚀","📁","📌","🔧","💡","📊"];
+const PHCOLS=["#c8f04a","#7b6ef6","#4af0c8","#f0c44a","#f06a6a"];
+const pctCol=p=>p>=70?"#c8f04a":p>=40?"#f0c44a":"#f06a6a";
+const statusMap={done:["rgba(200,240,74,0.1)","#c8f04a","완료"],progress:["rgba(123,110,246,0.1)","#7b6ef6","진행중"],todo:["rgba(255,255,255,0.05)","#4a4a58","예정"],block:["rgba(240,106,106,0.1)","#f06a6a","중단"]};
+const bdg=(color,bg)=>({display:"inline-block",padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:500,background:bg,color,border:`1px solid ${color}44`});
+const Btn=(color=C.muted,bg="transparent",bdr=C.border2)=>({padding:"5px 14px",borderRadius:8,border:`1px solid ${bdr}`,background:bg,color,fontSize:12,cursor:"pointer",fontFamily:"inherit"});
+
+
+
+const INIT_PROJECT={id:"proj_1",name:"신규 서비스 런칭",color:"#c8f04a",phases:[
+  {id:"p1",title:"1. 기획 및 리서치",color:"#c8f04a",icon:"📋",tasks:[
+    {id:"t1",name:"시장 조사 및 경쟁사 분석",assignee:"김민지",role:"서비스 기획자",team:"Product팀",aColor:"#7b6ef6",start:"04/01",end:"04/07",status:"done"},
+    {id:"t2",name:"사용자 인터뷰 (10명)",assignee:"김민지",role:"서비스 기획자",team:"Product팀",aColor:"#7b6ef6",start:"04/08",end:"04/14",status:"done"},
+    {id:"t3",name:"PRD 초안 작성",assignee:"이성현",role:"PM",team:"Product팀",aColor:"#c8f04a",start:"04/15",end:"04/21",status:"done"},
+    {id:"t4",name:"스테이크홀더 리뷰 및 승인",assignee:"박지우",role:"프로덕트 오너",team:"Product팀",aColor:"#f06a6a",start:"04/22",end:"04/25",status:"done"},
+  ]},
+  {id:"p2",title:"2. UX/UI 설계",color:"#7b6ef6",icon:"🎨",tasks:[
+    {id:"t5",name:"정보 구조(IA) 설계",assignee:"최유나",role:"UX 디자이너",team:"디자인팀",aColor:"#4af0c8",start:"04/21",end:"04/28",status:"done"},
+    {id:"t6",name:"핵심 플로우 와이어프레임",assignee:"최유나",role:"UX 디자이너",team:"디자인팀",aColor:"#4af0c8",start:"04/29",end:"05/09",status:"done"},
+    {id:"t7",name:"디자인 시스템 구축",assignee:"최유나",role:"UX 디자이너",team:"디자인팀",aColor:"#4af0c8",start:"05/06",end:"05/16",status:"progress"},
+    {id:"t8",name:"핵심 화면 UI 디자인",assignee:"오준혁",role:"UI 디자이너",team:"디자인팀",aColor:"#f0c44a",start:"05/12",end:"05/23",status:"progress"},
+  ]},
+  {id:"p3",title:"3. 개발",color:"#4af0c8",icon:"⚙️",tasks:[
+    {id:"t9",name:"개발 환경 셋업 및 아키텍처",assignee:"장태양",role:"백엔드 개발자",team:"개발팀",aColor:"#c8f04a",start:"05/12",end:"05/16",status:"progress"},
+    {id:"t10",name:"인증/계정 기능 개발",assignee:"장태양",role:"백엔드 개발자",team:"개발팀",aColor:"#c8f04a",start:"05/19",end:"05/30",status:"todo"},
+    {id:"t11",name:"핵심 기능 백엔드 API",assignee:"임서연",role:"백엔드 개발자",team:"개발팀",aColor:"#7b6ef6",start:"05/19",end:"06/13",status:"block"},
+    {id:"t12",name:"프론트엔드 UI 구현",assignee:"정민우",role:"프론트엔드 개발자",team:"개발팀",aColor:"#f06a6a",start:"05/26",end:"06/13",status:"todo"},
+  ]},
+  {id:"p4",title:"4. QA 및 테스트",color:"#f0c44a",icon:"🧪",tasks:[
+    {id:"t13",name:"테스트 케이스 작성",assignee:"한소희",role:"QA 엔지니어",team:"QA팀",aColor:"#4af0c8",start:"06/09",end:"06/13",status:"todo"},
+    {id:"t14",name:"기능 테스트 (FT)",assignee:"한소희",role:"QA 엔지니어",team:"QA팀",aColor:"#4af0c8",start:"06/16",end:"06/20",status:"todo"},
+  ]},
+  {id:"p5",title:"5. 출시 준비",color:"#f06a6a",icon:"🚀",tasks:[
+    {id:"t15",name:"마케팅 콘텐츠 제작",assignee:"윤하은",role:"마케터",team:"마케팅팀",aColor:"#f0c44a",start:"06/16",end:"06/27",status:"todo"},
+    {id:"t16",name:"공식 런칭",assignee:"박지우",role:"프로덕트 오너",team:"Product팀",aColor:"#f06a6a",start:"07/14",end:"07/14",status:"todo"},
+  ]},
+],memos:{t1:"주요 경쟁사 5곳 분석 완료. A사 온보딩 플로우 참고 예정.",t11:"인증 모듈 의존성 문제로 중단. 5/30 해소 예정."},done:{t1:true,t2:true,t3:true,t4:true,t5:true,t6:true}};
+
+function StatusPill({status}){
+  const [bg,col,label]=statusMap[status]||statusMap.todo;
+  return <span style={{padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:500,background:bg,color:col}}>{label}</span>;
+}
+
+function ConfirmModal({message,onConfirm,onCancel}){
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{background:C.bg3,border:`1px solid ${C.border2}`,borderRadius:16,padding:"2rem",maxWidth:380,width:"90%"}}>
+        <div style={{fontSize:15,fontWeight:600,color:C.text,marginBottom:"0.75rem",fontFamily:"Epilogue,sans-serif"}}>확인</div>
+        <div style={{fontSize:13,color:C.muted,lineHeight:1.8,marginBottom:"1.5rem"}} dangerouslySetInnerHTML={{__html:message}}/>
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+          <button onClick={onCancel} style={{...Btn(),padding:"8px 20px",fontSize:13}}>취소</button>
+          <button onClick={onConfirm} style={{padding:"8px 20px",borderRadius:8,border:"none",background:C.accent3,color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer"}}>확인</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InlineInput({value,onChange,onConfirm,onCancel,placeholder="이름 입력",width=200}){
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:6}}>
+      <input autoFocus value={value} onChange={e=>onChange(e.target.value)}
+        onKeyDown={e=>{if(e.key==="Enter")onConfirm();if(e.key==="Escape")onCancel();}}
+        placeholder={placeholder}
+        style={{padding:"4px 10px",borderRadius:7,border:`1px solid ${C.accent}`,background:C.bg4,color:C.text,fontSize:12,outline:"none",width,fontFamily:"inherit"}}
+      />
+      <button onClick={onConfirm} style={{padding:"4px 12px",borderRadius:7,border:"none",background:C.accent,color:"#0d0d0f",fontSize:11,fontWeight:700,cursor:"pointer"}}>확인</button>
+      <button onClick={onCancel} style={{...Btn(),padding:"4px 10px",fontSize:11}}>취소</button>
+    </div>
+  );
+}
+
+function WBSTab({isPm}){
+  const [projects,setProjects]=useState([INIT_PROJECT]);
+  const [activePId,setActivePId]=useState(INIT_PROJECT.id);
+  const [openPhases,setOpenPhases]=useState(new Set(["p1","p2","p3"]));
+  const [openMemos,setOpenMemos]=useState(new Set(["t1","t11"]));
+  const [confirmModal,setConfirmModal]=useState(null);
+  const [addingProj,setAddingProj]=useState(false);
+  const [newProjName,setNewProjName]=useState("");
+  const [renamingProjId,setRenamingProjId]=useState(null);
+  const [renameProjVal,setRenameProjVal]=useState("");
+  const [addingPhase,setAddingPhase]=useState(false);
+  const [newPhaseName,setNewPhaseName]=useState("");
+  const [renamingPhId,setRenamingPhId]=useState(null);
+  const [renamePhVal,setRenamePhVal]=useState("");
+  const dragIdx=useRef(null);
+  const [dragOver,setDragOver]=useState(null);
+  const prevProj=useRef(null);
+
+  useEffect(()=>{(async()=>{try{const r=await window.storage.get("pm-dash-v5",true).catch(()=>null);if(r)setProjects(JSON.parse(r.value));}catch(e){}})();},[]);
+  useEffect(()=>{const str=JSON.stringify(projects);if(prevProj.current===str)return;prevProj.current=str;window.storage.set("pm-dash-v5",str,true).catch(()=>{});},[projects]);
+
+  const activeProj=projects.find(p=>p.id===activePId)||projects[0];
+  const upd=(id,fn)=>setProjects(prev=>prev.map(p=>p.id===id?fn(p):p));
+  const phases=activeProj?.phases||[];
+  const doneMap=activeProj?.done||{};
+  const memoMap=activeProj?.memos||{};
+
+  const addProj=()=>{if(!newProjName.trim()){setAddingProj(false);setNewProjName("");return;}const id="proj_"+Date.now(),color=PCOLS[projects.length%PCOLS.length];setProjects(prev=>[...prev,{id,name:newProjName.trim(),color,phases:[],memos:{},done:{}}]);setActivePId(id);setNewProjName("");setAddingProj(false);};
+  const startRenameProj=id=>{const p=projects.find(x=>x.id===id);setRenamingProjId(id);setRenameProjVal(p.name);};
+  const confirmRenameProj=()=>{if(!renameProjVal.trim()){setRenamingProjId(null);return;}upd(renamingProjId,p=>({...p,name:renameProjVal.trim()}));setRenamingProjId(null);};
+  const deleteProj=id=>{if(projects.length<=1)return;setConfirmModal({message:"해당 프로젝트를 삭제하시겠습니까?<br/>프로젝트 안의 모든 카테고리와 작업이 삭제됩니다.",onConfirm:()=>{const next=projects.filter(p=>p.id!==id);setProjects(next);if(activePId===id)setActivePId(next[0].id);setConfirmModal(null);}});};
+  const addPhase=()=>{if(!newPhaseName.trim()){setAddingPhase(false);setNewPhaseName("");return;}const id="ph_"+Date.now();upd(activePId,p=>({...p,phases:[...p.phases,{id,title:`${p.phases.length+1}. ${newPhaseName.trim()}`,color:PHCOLS[p.phases.length%5],icon:PHICONS[p.phases.length%10],tasks:[]}]}));setOpenPhases(prev=>new Set([...prev,id]));setNewPhaseName("");setAddingPhase(false);};
+  const deletePhase=id=>setConfirmModal({message:"해당 카테고리를 삭제하시겠습니까?<br/>안에 들어있는 작업이 전부 삭제됩니다.",onConfirm:()=>{upd(activePId,p=>({...p,phases:p.phases.filter(ph=>ph.id!==id).map((ph,i)=>({...ph,title:ph.title.replace(/^\d+\.\s*/,`${i+1}. `)}))}));setConfirmModal(null);}});
+  const startRenamePh=id=>{const ph=phases.find(p=>p.id===id);setRenamingPhId(id);setRenamePhVal(ph.title.replace(/^\d+\.\s*/,""));};
+  const confirmRenamePh=()=>{if(!renamePhVal.trim()){setRenamingPhId(null);return;}upd(activePId,p=>({...p,phases:p.phases.map((ph,i)=>ph.id===renamingPhId?{...ph,title:`${i+1}. ${renamePhVal.trim()}`}:ph)}));setRenamingPhId(null);};
+  const onDragStart=(e,idx)=>{dragIdx.current=idx;e.dataTransfer.effectAllowed="move";};
+  const onDragOver=(e,idx)=>{e.preventDefault();if(dragIdx.current!==idx)setDragOver(idx);};
+  const onDrop=(e,toIdx)=>{e.preventDefault();const from=dragIdx.current;if(from==null||from===toIdx){setDragOver(null);return;}upd(activePId,p=>{const next=[...p.phases];const[m]=next.splice(from,1);next.splice(toIdx,0,m);return{...p,phases:next.map((ph,i)=>({...ph,title:ph.title.replace(/^\d+\.\s*/,`${i+1}. `)}))}});dragIdx.current=null;setDragOver(null);};
+  const onDragEnd=()=>{dragIdx.current=null;setDragOver(null);};
+
+  const allTasks=phases.flatMap(ph=>ph.tasks);
+  const total=allTasks.length,doneT=allTasks.filter(t=>doneMap[t.id]).length;
+  const progT=allTasks.filter(t=>!doneMap[t.id]&&t.status==="progress").length;
+  const blockT=allTasks.filter(t=>!doneMap[t.id]&&t.status==="block").length;
+
+  return (
+    <div>
+      {confirmModal&&<ConfirmModal message={confirmModal.message} onConfirm={confirmModal.onConfirm} onCancel={()=>setConfirmModal(null)}/>}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:"1.25rem",flexWrap:"wrap",gap:8}}>
+        <div><div style={{fontFamily:"Epilogue,sans-serif",fontSize:26,fontWeight:800,color:C.text,letterSpacing:"-0.02em"}}>WBS</div><div style={{fontSize:13,color:C.muted,marginTop:4}}>작업 분해 구조</div></div>
+        <span style={bdg(C.accent4,"rgba(74,240,200,0.12)")}>진행중</span>
+      </div>
+
+      {/* 프로젝트 탭 */}
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:"1.5rem",flexWrap:"wrap",padding:"10px 14px",background:C.bg3,borderRadius:12,border:`1px solid ${C.border}`}}>
+        <span style={{fontSize:11,color:C.faint,letterSpacing:"0.04em",textTransform:"uppercase",marginRight:4,flexShrink:0}}>프로젝트</span>
+        {projects.map(proj=>
+          renamingProjId===proj.id
+            ? <InlineInput key={proj.id} value={renameProjVal} onChange={setRenameProjVal} onConfirm={confirmRenameProj} onCancel={()=>setRenamingProjId(null)} width={160}/>
+            : <div key={proj.id} style={{display:"flex",alignItems:"center",borderRadius:8,overflow:"hidden",border:`1px solid ${activePId===proj.id?proj.color:C.border2}`}}>
+                <button onClick={()=>setActivePId(proj.id)} style={{padding:"5px 12px",border:"none",background:activePId===proj.id?`${proj.color}18`:"transparent",color:activePId===proj.id?proj.color:C.muted,fontSize:12,fontWeight:activePId===proj.id?600:400,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{width:6,height:6,borderRadius:"50%",background:proj.color,flexShrink:0}}/>{proj.name}
+                </button>
+                {isPm&&<button onClick={()=>startRenameProj(proj.id)} style={{padding:"5px 7px",border:"none",borderLeft:`1px solid ${C.border}`,background:"transparent",color:C.faint,fontSize:11,cursor:"pointer"}}>✏</button>}
+                {isPm&&projects.length>1&&<button onClick={()=>deleteProj(proj.id)} style={{padding:"5px 7px",border:"none",borderLeft:`1px solid ${C.border}`,background:"transparent",color:C.accent3,fontSize:11,cursor:"pointer"}}>✕</button>}
+              </div>
+        )}
+        {isPm&&!addingProj&&<button onClick={()=>setAddingProj(true)} style={{...Btn(C.accent,"transparent",C.accent),padding:"5px 12px",fontWeight:500}}>+ 프로젝트 추가</button>}
+        {isPm&&addingProj&&<InlineInput value={newProjName} onChange={setNewProjName} onConfirm={addProj} onCancel={()=>{setAddingProj(false);setNewProjName("");}} placeholder="프로젝트 이름 입력" width={180}/>}
+      </div>
+
+      {/* 요약 */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:"0.75rem",marginBottom:"1.5rem"}}>
+        {[["전체",total+"개",C.text],["완료",doneT+"개",C.accent],["진행중",progT+"개",C.accent2],["중단",blockT+"개",C.accent3],["완료율",total?Math.round(doneT/total*100)+"%":"0%",C.accent]].map(([l,v,c])=>(
+          <div key={l} style={{background:C.bg3,border:`1px solid ${C.border}`,borderRadius:10,padding:"0.875rem 1.25rem"}}>
+            <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:5}}>{l}</div>
+            <div style={{fontFamily:"Epilogue,sans-serif",fontSize:22,fontWeight:700,color:c}}>{v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* 컨트롤 */}
+      <div style={{display:"flex",gap:8,marginBottom:"1.25rem",alignItems:"center",flexWrap:"wrap"}}>
+        <button onClick={()=>setOpenPhases(new Set(phases.map(p=>p.id)))} style={{...Btn(),padding:"6px 14px"}}>전체 펼치기</button>
+        <button onClick={()=>setOpenPhases(new Set())} style={{...Btn(),padding:"6px 14px"}}>전체 접기</button>
+        {isPm&&!addingPhase&&<button onClick={()=>setAddingPhase(true)} style={{...Btn(C.accent,"transparent",C.accent),padding:"6px 14px",fontWeight:500}}>+ 카테고리 추가</button>}
+        {isPm&&addingPhase&&<InlineInput value={newPhaseName} onChange={setNewPhaseName} onConfirm={addPhase} onCancel={()=>{setAddingPhase(false);setNewPhaseName("");}} placeholder="카테고리 이름 입력" width={200}/>}
+        <div style={{marginLeft:"auto",display:"flex",gap:12,alignItems:"center"}}>
+          {[["#c8f04a","완료"],["#7b6ef6","진행중"],["#4a4a58","예정"],["#f06a6a","중단"]].map(([c,l])=>(
+            <div key={l} style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:C.muted}}><div style={{width:8,height:8,borderRadius:2,background:c}}/>{l}</div>
+          ))}
+        </div>
+      </div>
+
+      {/* 컬럼 헤더 */}
+      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 80px 80px 80px 36px",gap:12,padding:"8px 16px",fontSize:11,color:C.faint,letterSpacing:"0.04em",textTransform:"uppercase",borderBottom:`1px solid ${C.border}`,background:C.bg2,borderRadius:"8px 8px 0 0"}}>
+        {["작업명","담당자","팀 / 직무","시작일","종료일","상태",""].map(h=><div key={h}>{h}</div>)}
+      </div>
+
+      {/* 페이즈 */}
+      <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6}}>
+        {phases.map((phase,pIdx)=>{
+          const pDone=phase.tasks.filter(t=>doneMap[t.id]).length;
+          const pPct=phase.tasks.length?Math.round(pDone/phase.tasks.length*100):0;
+          const isOpen=openPhases.has(phase.id);
+          const isDO=dragOver===pIdx;
+          return (
+            <div key={phase.id} onDragOver={e=>onDragOver(e,pIdx)} onDrop={e=>onDrop(e,pIdx)} onDragEnd={onDragEnd}
+              style={{borderRadius:12,overflow:"hidden",border:`1px solid ${isDO?C.accent:C.border}`,transition:"border-color 0.15s",transform:isDO?"scale(1.005)":"scale(1)"}}>
+              <div style={{background:C.bg3}}>
+                <div onClick={()=>setOpenPhases(prev=>{const n=new Set(prev);n.has(phase.id)?n.delete(phase.id):n.add(phase.id);return n;})}
+                  style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",cursor:"pointer",fontSize:13,fontWeight:500}}>
+                  {isPm&&<div draggable onDragStart={e=>{e.stopPropagation();onDragStart(e,pIdx);}} onClick={e=>e.stopPropagation()}
+                    style={{color:C.faint,fontSize:16,cursor:"grab",flexShrink:0,userSelect:"none",padding:"2px 4px"}} title="드래그해서 순서 변경">⠿</div>}
+                  <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+                    <span>{phase.icon}</span><span style={{color:C.text}}>{phase.title}</span>
+                    <span style={{color:C.faint,fontSize:12,fontWeight:400}}>{pDone}/{phase.tasks.length}완료</span>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+                    <div style={{width:120,height:3,background:C.bg4,borderRadius:2,overflow:"hidden"}}><div style={{width:pPct+"%",height:"100%",background:phase.color,borderRadius:2,transition:"width 0.6s ease"}}/></div>
+                    <div style={{color:C.muted,fontSize:12,minWidth:36,textAlign:"right"}}>{pPct}%</div>
+                    <div style={{color:C.faint,fontSize:14,transition:"transform 0.2s",transform:isOpen?"rotate(180deg)":"rotate(0)"}}>▾</div>
+                  </div>
+                </div>
+                {isPm&&<div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 16px 8px 48px",borderTop:`1px solid ${C.border}`}} onClick={e=>e.stopPropagation()}>
+                  {renamingPhId===phase.id
+                    ? <InlineInput value={renamePhVal} onChange={setRenamePhVal} onConfirm={confirmRenamePh} onCancel={()=>setRenamingPhId(null)} width={180}/>
+                    : <><button onClick={()=>startRenamePh(phase.id)} style={{...Btn(C.muted),padding:"3px 10px",fontSize:11}}>✏ 이름 변경</button>
+                       <button onClick={()=>deletePhase(phase.id)} style={{...Btn(C.accent3,"transparent","rgba(240,106,106,0.3)"),padding:"3px 10px",fontSize:11}}>✕ 삭제</button></>
+                  }
+                </div>}
+              </div>
+              {isOpen&&<div style={{background:C.bg2}}>
+                {phase.tasks.length===0&&<div style={{padding:"1.5rem",textAlign:"center",color:C.faint,fontSize:13}}>작업이 없어요.</div>}
+                {phase.tasks.map(t=>{
+                  const isDone=!!doneMap[t.id],hasMemo=!!(memoMap[t.id]?.trim()),isMO=openMemos.has(t.id);
+                  return (
+                    <div key={t.id}>
+                      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 80px 80px 80px 36px",gap:12,alignItems:"center",padding:"10px 16px 10px 40px",borderBottom:`1px solid ${C.border}`,fontSize:13}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <div onClick={()=>upd(activePId,p=>({...p,done:{...p.done,[t.id]:!p.done?.[t.id]}}))} style={{width:16,height:16,borderRadius:4,border:isDone?"none":`1.5px solid ${C.border2}`,background:isDone?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer"}}>
+                            {isDone&&<span style={{fontSize:10,color:"#0d0d0f",fontWeight:700}}>✓</span>}
+                          </div>
+                          <span style={{color:isDone?C.faint:C.text,textDecoration:isDone?"line-through":"none"}}>{t.name}</span>
+                        </div>
+                        <div><div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 8px",borderRadius:20,background:C.bg4,fontSize:11,color:C.muted}}>
+                          <div style={{width:16,height:16,borderRadius:"50%",background:t.aColor+"22",color:t.aColor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700}}>{t.assignee[0]}</div>{t.assignee}
+                        </div></div>
+                        <div><div style={{fontSize:12,color:C.text}}>{t.team}</div><div style={{fontSize:11,color:C.faint,marginTop:2}}>{t.role}</div></div>
+                        <div style={{fontSize:12,color:C.muted}}>{t.start}</div>
+                        <div style={{fontSize:12,color:C.muted}}>{t.end}</div>
+                        <div><StatusPill status={isDone?"done":t.status}/></div>
+                        <div style={{textAlign:"right"}}><button onClick={()=>setOpenMemos(prev=>{const n=new Set(prev);n.has(t.id)?n.delete(t.id):n.add(t.id);return n;})} style={{background:"transparent",border:"none",color:hasMemo?C.text:C.faint,fontSize:14,cursor:"pointer",padding:"2px 4px",borderRadius:4}}>✎</button></div>
+                      </div>
+                      {isMO&&<div style={{padding:"0 16px 12px 40px",borderBottom:`1px solid ${C.border}`,background:C.bg2}}>
+                        <div style={{borderTop:`1px dashed ${C.border2}`,paddingTop:10}}>
+                          <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:8}}>
+                            <div style={{width:20,height:20,borderRadius:"50%",background:t.aColor+"22",color:t.aColor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700}}>{t.assignee[0]}</div>
+                            <span style={{fontSize:11,fontWeight:500,color:C.muted}}>{t.assignee}</span>
+                            <span style={{fontSize:11,color:C.faint}}>· {t.role}</span>
+                          </div>
+                          <div style={{marginLeft:27,background:C.bg3,border:`1px solid ${C.border2}`,borderRadius:"0 10px 10px 10px",padding:"8px 12px"}}>
+                            <textarea value={memoMap[t.id]||""} onChange={e=>upd(activePId,p=>({...p,memos:{...p.memos,[t.id]:e.target.value}}))}
+                              placeholder="이 작업에 대한 메모를 입력하세요..."
+                              style={{display:"block",width:"100%",background:"transparent",border:"none",outline:"none",color:C.muted,fontFamily:"inherit",fontSize:12,lineHeight:1.7,resize:"none",minHeight:32}}/>
+                          </div>
+                        </div>
+                      </div>}
+                    </div>
+                  );
+                })}
+              </div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [tab,setTab]=useState("wbs");
+  const [isPm,setIsPm]=useState(false);
+  return (
+    <div style={{background:C.bg,minHeight:"100vh",color:C.text,fontFamily:"'DM Sans',sans-serif",fontSize:14,lineHeight:1.6}}>
+      <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}} *{box-sizing:border-box;margin:0;padding:0;} button{font-family:inherit;transition:all 0.15s;} textarea,input{font-family:inherit;} ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-thumb{background:#333;border-radius:3px}`}</style>
+      <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+      <nav style={{position:"sticky",top:0,zIndex:100,background:"rgba(13,13,15,0.92)",backdropFilter:"blur(12px)",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 2rem",height:56}}>
+        {/* 로고 */}
+        <div style={{display:"flex",alignItems:"center",gap:10,fontFamily:"Epilogue,sans-serif",fontSize:15,fontWeight:700,letterSpacing:"0.04em",color:C.text}}>
+          <div style={{width:8,height:8,borderRadius:"50%",background:C.accent,animation:"pulse 2s ease-in-out infinite"}}/>PM 협업 대시보드
+        </div>
+        {/* 탭 */}
+        <div style={{display:"flex",gap:2,background:C.bg3,borderRadius:10,padding:4,border:`1px solid ${C.border}`}}>
+          {[["wbs","WBS"]].map(([id,label])=>(
+            <button key={id} onClick={()=>setTab(id)} style={{padding:"6px 18px",borderRadius:7,fontSize:13,fontWeight:tab===id?500:400,color:tab===id?C.text:C.muted,background:tab===id?C.bg4:"transparent",border:"none",cursor:"pointer",whiteSpace:"nowrap"}}>{label}</button>
+          ))}
+        </div>
+        {/* 우측: PM 편집 버튼(WBS일 때만) + 날짜 */}
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <button onClick={()=>setIsPm(p=>!p)} style={{padding:"5px 14px",borderRadius:8,fontSize:12,cursor:"pointer",fontWeight:isPm?600:400,border:`1px solid ${isPm?C.accent:C.border2}`,background:isPm?"rgba(200,240,74,0.1)":"transparent",color:isPm?C.accent:C.muted}}>
+              {isPm?"PM 편집 중 ●":"PM 편집 모드"}
+            </button>
+          <div style={{fontSize:12,color:C.faint}}>2025 · Q2</div>
+        </div>
+      </nav>
+      <div style={{maxWidth:1100,margin:"0 auto",padding:"2rem"}}>
+        {tab==="wbs"&&<WBSTab isPm={isPm}/>}}
+      </div>
+    </div>
+  );
+}
+
+const container = document.getElementById('root');
+const root = ReactDOM.createRoot(container);
+root.render(React.createElement(App));
+
+</script>
+</body>
+</html>
