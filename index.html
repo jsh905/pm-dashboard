@@ -24,11 +24,11 @@ textarea,input,select{font-family:inherit;}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.3/babel.min.js"></script>
 <script type="text/babel">
 const {useState,useEffect,useRef}=React;
- 
+
 const SUPA_URL="https://kabokfrmiwnhhkmxkwoo.supabase.co";
 const SUPA_KEY="sb_publishable_HjzKaCHMgSLjsGBu9hxPrw_Kbzu2Qo1";
 const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
- 
+
 const C={bg:"#0d0d0f",bg2:"#141416",bg3:"#1a1a1e",bg4:"#222228",border:"rgba(255,255,255,0.07)",border2:"rgba(255,255,255,0.12)",text:"#f0f0f2",muted:"#8a8a99",faint:"#4a4a58",accent:"#c8f04a",accent2:"#7b6ef6",accent3:"#f06a6a",accent4:"#4af0c8"};
 const PCOLS=["#c8f04a","#7b6ef6","#4af0c8","#f0c44a","#f06a6a","#e879f9","#38bdf8"];
 const PHICONS=["📋","🎨","⚙️","🧪","🚀","📁","📌","🔧","💡","📊"];
@@ -38,7 +38,7 @@ const Btn=(color=C.muted,bg="transparent",bdr=C.border2)=>({padding:"5px 14px",b
 const bdg=(color,bg)=>({display:"inline-block",padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:500,background:bg,color,border:`1px solid ${color}44`});
 const aColors=["#7b6ef6","#c8f04a","#f06a6a","#4af0c8","#f0c44a","#e879f9","#38bdf8"];
 const nameColor=name=>aColors[Math.abs([...name].reduce((h,c)=>h*31+c.charCodeAt(0),0))%aColors.length];
- 
+
 function StatusPill({status}){
   const [bg,col,label]=statusMap[status]||statusMap.todo;
   return <span style={{padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:500,background:bg,color:col}}>{label}</span>;
@@ -71,7 +71,7 @@ function PwInput({value,onChange,placeholder="비밀번호",onKeyDown,style={}})
     </div>
   );
 }
- 
+
 function InlineInput({value,onChange,onConfirm,onCancel,placeholder="이름 입력",width=200}){
   return(
     <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -81,7 +81,7 @@ function InlineInput({value,onChange,onConfirm,onCancel,placeholder="이름 입�
     </div>
   );
 }
- 
+
 /* ── 로그인 화면 ── */
 function LoginScreen({onLogin}){
   const [email,setEmail]=useState("");
@@ -116,7 +116,7 @@ function LoginScreen({onLogin}){
     </div>
   );
 }
- 
+
 /* ── 팀원 관리 패널 ── */
 function TeamPanel({onClose}){
   const [members,setMembers]=useState([]);
@@ -130,10 +130,10 @@ function TeamPanel({onClose}){
   // 삭제 확인 모달 상태
   const [deleteTarget,setDeleteTarget]=useState(null); // {id, name, is_pm}
   const [deleteConfirmName,setDeleteConfirmName]=useState("");
- 
+
   useEffect(()=>{loadMembers();},[]);
   const loadMembers=async()=>{setLoading(true);const {data}=await sb.from("profiles").select("*").order("name");setMembers(data||[]);setLoading(false);};
- 
+
   const addMember=async()=>{
     if(!form.email||!form.name||!form.role||!form.team||!form.password){setErr("모든 항목을 입력해주세요.");return;}
     setSaving(true);setErr("");
@@ -143,22 +143,22 @@ function TeamPanel({onClose}){
     if(profErr){setErr("프로필 저장 실패: "+profErr.message);setSaving(false);return;}
     setForm({email:"",name:"",role:"",team:"",is_pm:false,password:""});setAdding(false);await loadMembers();setSaving(false);
   };
- 
+
   const startEdit=m=>{setEditingId(m.id);setEditForm({name:m.name,role:m.role,team:m.team,is_pm:m.is_pm});};
   const saveEdit=async()=>{
     if(!editForm.name||!editForm.role||!editForm.team){return;}
     await sb.from("profiles").update({name:editForm.name,role:editForm.role,team:editForm.team,is_pm:editForm.is_pm}).eq("id",editingId);
     setEditingId(null);await loadMembers();
   };
- 
+
   const confirmDelete=async()=>{
     await sb.from("profiles").delete().eq("id",deleteTarget.id);
     setDeleteTarget(null);setDeleteConfirmName("");await loadMembers();
   };
- 
+
   const fs={padding:"8px 12px",borderRadius:8,border:`1px solid ${C.border2}`,background:C.bg4,color:C.text,fontSize:12,outline:"none",width:"100%"};
   const canDelete=deleteTarget?.is_pm ? deleteConfirmName===deleteTarget?.name : true;
- 
+
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}}>
       {/* 삭제 확인 모달 */}
@@ -189,7 +189,7 @@ function TeamPanel({onClose}){
           </div>
         </div>
       )}
- 
+
       <div style={{background:C.bg2,border:`1px solid ${C.border2}`,borderRadius:18,width:580,maxHeight:"80vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"1.25rem 1.5rem",borderBottom:`1px solid ${C.border}`}}>
           <div style={{fontFamily:"Epilogue,sans-serif",fontSize:16,fontWeight:700,color:C.text}}>팀원 관리</div>
@@ -253,7 +253,7 @@ function TeamPanel({onClose}){
     </div>
   );
 }
- 
+
 /* ── 메모 패널 ── */
 function MemoPanel({task,memo,isAssignee,onSave}){
   const [val,setVal]=useState(memo?.content||"");
@@ -284,7 +284,7 @@ function MemoPanel({task,memo,isAssignee,onSave}){
     </div>
   );
 }
- 
+
 /* ── WBS 탭 ── */
 function WBSTab({user,profile,isPm}){
   const [projects,setProjects]=useState([]);
@@ -296,6 +296,12 @@ function WBSTab({user,profile,isPm}){
   const [openPhases,setOpenPhases]=useState(new Set());
   const [openMemos,setOpenMemos]=useState(new Set());
   const [confirmModal,setConfirmModal]=useState(null);
+  // 태스크 추가/수정/삭제
+  const [addingTask,setAddingTask]=useState(null); // phase_id
+  const [taskForm,setTaskForm]=useState({name:"",start_date:"",end_date:"",status:"todo"});
+  const [editingTaskId,setEditingTaskId]=useState(null);
+  const [editTaskForm,setEditTaskForm]=useState({name:"",start_date:"",end_date:"",status:"todo"});
+  const [deleteTaskTarget,setDeleteTaskTarget]=useState(null);
   const [addingProj,setAddingProj]=useState(false);
   const [newProjName,setNewProjName]=useState("");
   const [renamingProjId,setRenamingProjId]=useState(null);
@@ -306,10 +312,10 @@ function WBSTab({user,profile,isPm}){
   const [renamePhVal,setRenamePhVal]=useState("");
   const dragIdx=useRef(null);
   const [dragOver,setDragOver]=useState(null);
- 
+
   useEffect(()=>{loadProjects();},[]);
   useEffect(()=>{if(activePId)loadPhases();},[activePId]);
- 
+
   const loadProjects=async()=>{
     const {data}=await sb.from("projects").select("*").order("created_at");
     setProjects(data||[]);
@@ -332,7 +338,7 @@ function WBSTab({user,profile,isPm}){
     }
     setLoading(false);
   };
- 
+
   const addProj=async()=>{
     if(!newProjName.trim()){setAddingProj(false);setNewProjName("");return;}
     const {data}=await sb.from("projects").insert({name:newProjName.trim(),color:PCOLS[projects.length%PCOLS.length]}).select().single();
@@ -355,7 +361,7 @@ function WBSTab({user,profile,isPm}){
       setConfirmModal(null);
     }});
   };
- 
+
   const addPhase=async()=>{
     if(!newPhaseName.trim()){setAddingPhase(false);setNewPhaseName("");return;}
     const oi=phases.length;
@@ -378,7 +384,7 @@ function WBSTab({user,profile,isPm}){
     await sb.from("phases").update({title:newTitle}).eq("id",renamingPhId);
     setPhases(prev=>prev.map(p=>p.id===renamingPhId?{...p,title:newTitle}:p));setRenamingPhId(null);
   };
- 
+
   const onDragStart=(e,idx)=>{dragIdx.current=idx;e.dataTransfer.effectAllowed="move";};
   const onDragOver=(e,idx)=>{e.preventDefault();if(dragIdx.current!==idx)setDragOver(idx);};
   const onDrop=async(e,toIdx)=>{
@@ -391,7 +397,7 @@ function WBSTab({user,profile,isPm}){
     dragIdx.current=null;setDragOver(null);
   };
   const onDragEnd=()=>{dragIdx.current=null;setDragOver(null);};
- 
+
   const toggleDone=async(t)=>{
     const newDone=!t.is_done;
     const newStatus=newDone?"done":t.status==="done"?"todo":t.status;
@@ -408,22 +414,65 @@ function WBSTab({user,profile,isPm}){
       if(data)setMemos(prev=>({...prev,[taskId]:data}));
     }
   };
- 
+
+  /* ── 태스크 CRUD (담당자 본인) ── */
+  const addTask=async(phaseId)=>{
+    if(!taskForm.name.trim())return;
+    const orderIdx=tasks.filter(t=>t.phase_id===phaseId).length;
+    const {data}=await sb.from("tasks").insert({
+      phase_id:phaseId, name:taskForm.name.trim(),
+      assignee_id:user.id, start_date:taskForm.start_date||null,
+      end_date:taskForm.end_date||null, status:taskForm.status, order_idx:orderIdx
+    }).select("*,profiles(name,role,team)").single();
+    if(data){setTasks(prev=>[...prev,data]);}
+    setAddingTask(null);setTaskForm({name:"",start_date:"",end_date:"",status:"todo"});
+  };
+  const startEditTask=t=>{
+    setEditingTaskId(t.id);
+    setEditTaskForm({name:t.name,start_date:t.start_date||"",end_date:t.end_date||"",status:t.status});
+  };
+  const saveEditTask=async()=>{
+    if(!editTaskForm.name.trim()){setEditingTaskId(null);return;}
+    await sb.from("tasks").update({
+      name:editTaskForm.name.trim(), start_date:editTaskForm.start_date||null,
+      end_date:editTaskForm.end_date||null, status:editTaskForm.status
+    }).eq("id",editingTaskId);
+    setTasks(prev=>prev.map(t=>t.id===editingTaskId?{...t,...editTaskForm}:t));
+    setEditingTaskId(null);
+  };
+  const deleteTask=async()=>{
+    await sb.from("tasks").delete().eq("id",deleteTaskTarget.id);
+    setTasks(prev=>prev.filter(t=>t.id!==deleteTaskTarget.id));
+    setDeleteTaskTarget(null);
+  };
+
   const phaseTasks=ph=>tasks.filter(t=>t.phase_id===ph.id);
   const total=tasks.length,doneT=tasks.filter(t=>t.is_done).length;
   const progT=tasks.filter(t=>!t.is_done&&t.status==="progress").length;
   const blockT=tasks.filter(t=>!t.is_done&&t.status==="block").length;
- 
+
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:300,gap:12,color:C.muted}}><span className="spinner"/>데이터 불러오는 중...</div>);
- 
+
   return(
     <div>
       {confirmModal&&<ConfirmModal message={confirmModal.message} onConfirm={confirmModal.onConfirm} onCancel={()=>setConfirmModal(null)}/>}
+      {deleteTaskTarget&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{background:C.bg3,border:`1px solid ${C.border2}`,borderRadius:16,padding:"2rem",maxWidth:360,width:"90%"}}>
+            <div style={{fontSize:15,fontWeight:600,color:C.text,marginBottom:"0.75rem",fontFamily:"Epilogue,sans-serif"}}>작업 삭제</div>
+            <div style={{fontSize:13,color:C.muted,lineHeight:1.8,marginBottom:"1.5rem"}}><span style={{color:C.text,fontWeight:600}}>{deleteTaskTarget.name}</span> 작업을 정말 삭제하시겠습니까?</div>
+            <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+              <button onClick={()=>setDeleteTaskTarget(null)} style={{...Btn(),padding:"8px 20px",fontSize:13}}>아니오</button>
+              <button onClick={deleteTask} style={{padding:"8px 20px",borderRadius:8,border:"none",background:C.accent3,color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer"}}>삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:"1.25rem",flexWrap:"wrap",gap:8}}>
         <div style={{fontFamily:"Epilogue,sans-serif",fontSize:26,fontWeight:800,color:C.text,letterSpacing:"-0.02em"}}>WBS</div>
         <span style={bdg(C.accent4,"rgba(74,240,200,0.12)")}>진행중</span>
       </div>
- 
+
       {/* 프로젝트 탭 */}
       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:"1.5rem",flexWrap:"wrap",padding:"10px 14px",background:C.bg3,borderRadius:12,border:`1px solid ${C.border}`}}>
         <span style={{fontSize:11,color:C.faint,letterSpacing:"0.04em",textTransform:"uppercase",marginRight:4,flexShrink:0}}>프로젝트</span>
@@ -442,7 +491,7 @@ function WBSTab({user,profile,isPm}){
         {isPm&&addingProj&&<InlineInput value={newProjName} onChange={setNewProjName} onConfirm={addProj} onCancel={()=>{setAddingProj(false);setNewProjName("");}} placeholder="프로젝트 이름 입력" width={180}/>}
         {projects.length===0&&!addingProj&&<span style={{fontSize:12,color:C.faint}}>프로젝트가 없어요. PM이 추가해주세요.</span>}
       </div>
- 
+
       {/* 요약 */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:"0.75rem",marginBottom:"1.5rem"}}>
         {[["전체",total+"개",C.text],["완료",doneT+"개",C.accent],["진행중",progT+"개",C.accent2],["중단",blockT+"개",C.accent3],["완료율",total?Math.round(doneT/total*100)+"%":"0%",C.accent]].map(([l,v,c])=>(
@@ -452,7 +501,7 @@ function WBSTab({user,profile,isPm}){
           </div>
         ))}
       </div>
- 
+
       {/* 컨트롤 */}
       <div style={{display:"flex",gap:8,marginBottom:"1.25rem",alignItems:"center",flexWrap:"wrap"}}>
         <button onClick={()=>setOpenPhases(new Set(phases.map(p=>p.id)))} style={{...Btn(),padding:"6px 14px"}}>전체 펼치기</button>
@@ -465,12 +514,12 @@ function WBSTab({user,profile,isPm}){
           ))}
         </div>
       </div>
- 
+
       {/* 컬럼 헤더 */}
-      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 80px 80px 80px 36px",gap:12,padding:"8px 16px",fontSize:11,color:C.faint,letterSpacing:"0.04em",textTransform:"uppercase",borderBottom:`1px solid ${C.border}`,background:C.bg2,borderRadius:"8px 8px 0 0"}}>
+      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 80px 80px 80px auto",gap:12,padding:"8px 16px",fontSize:11,color:C.faint,letterSpacing:"0.04em",textTransform:"uppercase",borderBottom:`1px solid ${C.border}`,background:C.bg2,borderRadius:"8px 8px 0 0"}}>
         {["작업명","담당자","팀 / 직무","시작일","종료일","상태",""].map(h=><div key={h}>{h}</div>)}
       </div>
- 
+
       {/* 페이즈 */}
       <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6}}>
         {phases.length===0&&<div style={{padding:"2rem",textAlign:"center",color:C.faint,fontSize:13}}>카테고리가 없어요. PM이 추가해주세요.</div>}
@@ -504,37 +553,89 @@ function WBSTab({user,profile,isPm}){
                 </div>}
               </div>
               {isOpen&&<div style={{background:C.bg2}}>
-                {pts.length===0&&<div style={{padding:"1.5rem",textAlign:"center",color:C.faint,fontSize:13}}>작업이 없어요.</div>}
+                {pts.length===0&&addingTask!==phase.id&&<div style={{padding:"1.5rem",textAlign:"center",color:C.faint,fontSize:13}}>작업이 없어요. 아래 버튼으로 본인 작업을 추가하세요.</div>}
                 {pts.map(t=>{
                   const ac=nameColor(t.profiles?.name||"?");
                   const hasMemo=!!(memos[t.id]?.content?.trim());
                   const isMO=openMemos.has(t.id);
                   const isAssignee=t.assignee_id===user.id;
+                  const isEditing=editingTaskId===t.id;
+                  const tfs={padding:"5px 8px",borderRadius:6,border:`1px solid ${C.border2}`,background:C.bg4,color:C.text,fontSize:12,outline:"none",width:"100%"};
                   return(
                     <div key={t.id}>
-                      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 80px 80px 80px 36px",gap:12,alignItems:"center",padding:"10px 16px 10px 40px",borderBottom:`1px solid ${C.border}`,fontSize:13}}>
-                        <div style={{display:"flex",alignItems:"center",gap:8}}>
-                          <div onClick={()=>(isAssignee||isPm)&&toggleDone(t)} style={{width:16,height:16,borderRadius:4,border:t.is_done?"none":`1.5px solid ${C.border2}`,background:t.is_done?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:(isAssignee||isPm)?"pointer":"default",opacity:(isAssignee||isPm)?1:0.5}}>
-                            {t.is_done&&<span style={{fontSize:10,color:"#0d0d0f",fontWeight:700}}>✓</span>}
+                      {isEditing?(
+                        /* 수정 모드 */
+                        <div style={{padding:"10px 16px 10px 40px",borderBottom:`1px solid ${C.border}`,background:C.bg3}}>
+                          <div style={{display:"grid",gridTemplateColumns:"2fr 80px 80px 120px auto",gap:8,alignItems:"center"}}>
+                            <input value={editTaskForm.name} onChange={e=>setEditTaskForm(p=>({...p,name:e.target.value}))} placeholder="작업명" style={tfs}/>
+                            <input value={editTaskForm.start_date} onChange={e=>setEditTaskForm(p=>({...p,start_date:e.target.value}))} placeholder="시작일" style={tfs}/>
+                            <input value={editTaskForm.end_date} onChange={e=>setEditTaskForm(p=>({...p,end_date:e.target.value}))} placeholder="종료일" style={tfs}/>
+                            <select value={editTaskForm.status} onChange={e=>setEditTaskForm(p=>({...p,status:e.target.value}))} style={{...tfs,width:"auto"}}>
+                              <option value="todo">예정</option>
+                              <option value="progress">진행중</option>
+                              <option value="done">완료</option>
+                              <option value="block">중단</option>
+                            </select>
+                            <div style={{display:"flex",gap:6}}>
+                              <button onClick={saveEditTask} style={{padding:"4px 10px",borderRadius:6,border:"none",background:C.accent,color:"#0d0d0f",fontSize:11,fontWeight:700,cursor:"pointer"}}>저장</button>
+                              <button onClick={()=>setEditingTaskId(null)} style={{...Btn(),padding:"4px 10px",fontSize:11}}>취소</button>
+                            </div>
                           </div>
-                          <span style={{color:t.is_done?C.faint:C.text,textDecoration:t.is_done?"line-through":"none"}}>{t.name}</span>
                         </div>
-                        <div><div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 8px",borderRadius:20,background:C.bg4,fontSize:11,color:C.muted}}>
-                          <div style={{width:16,height:16,borderRadius:"50%",background:ac+"22",color:ac,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700}}>{(t.profiles?.name||"?")[0]}</div>
-                          {t.profiles?.name||"미배정"}
-                        </div></div>
-                        <div><div style={{fontSize:12,color:C.text}}>{t.profiles?.team||""}</div><div style={{fontSize:11,color:C.faint,marginTop:2}}>{t.profiles?.role||""}</div></div>
-                        <div style={{fontSize:12,color:C.muted}}>{t.start_date}</div>
-                        <div style={{fontSize:12,color:C.muted}}>{t.end_date}</div>
-                        <div><StatusPill status={t.is_done?"done":t.status}/></div>
-                        <div style={{textAlign:"right"}}>
-                          <button onClick={()=>setOpenMemos(prev=>{const n=new Set(prev);n.has(t.id)?n.delete(t.id):n.add(t.id);return n;})} title={hasMemo?"메모 있음":"메모 없음"} style={{background:"transparent",border:"none",color:hasMemo?C.accent:C.faint,fontSize:15,cursor:"pointer",padding:"2px 4px",borderRadius:4}}>🗒</button>
+                      ):(
+                        <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 80px 80px 80px auto",gap:12,alignItems:"center",padding:"10px 16px 10px 40px",borderBottom:`1px solid ${C.border}`,fontSize:13}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <div onClick={()=>(isAssignee||isPm)&&toggleDone(t)} style={{width:16,height:16,borderRadius:4,border:t.is_done?"none":`1.5px solid ${C.border2}`,background:t.is_done?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:(isAssignee||isPm)?"pointer":"default",opacity:(isAssignee||isPm)?1:0.5}}>
+                              {t.is_done&&<span style={{fontSize:10,color:"#0d0d0f",fontWeight:700}}>✓</span>}
+                            </div>
+                            <span style={{color:t.is_done?C.faint:C.text,textDecoration:t.is_done?"line-through":"none"}}>{t.name}</span>
+                          </div>
+                          <div><div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 8px",borderRadius:20,background:C.bg4,fontSize:11,color:C.muted}}>
+                            <div style={{width:16,height:16,borderRadius:"50%",background:ac+"22",color:ac,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700}}>{(t.profiles?.name||"?")[0]}</div>
+                            {t.profiles?.name||"미배정"}
+                          </div></div>
+                          <div><div style={{fontSize:12,color:C.text}}>{t.profiles?.team||""}</div><div style={{fontSize:11,color:C.faint,marginTop:2}}>{t.profiles?.role||""}</div></div>
+                          <div style={{fontSize:12,color:C.muted}}>{t.start_date||"-"}</div>
+                          <div style={{fontSize:12,color:C.muted}}>{t.end_date||"-"}</div>
+                          <div><StatusPill status={t.is_done?"done":t.status}/></div>
+                          <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"flex-end"}}>
+                            <button onClick={()=>setOpenMemos(prev=>{const n=new Set(prev);n.has(t.id)?n.delete(t.id):n.add(t.id);return n;})} title={hasMemo?"메모 있음":"메모 없음"} style={{background:"transparent",border:"none",color:hasMemo?C.accent:C.faint,fontSize:15,cursor:"pointer",padding:"2px 4px",borderRadius:4}}>🗒</button>
+                            {isAssignee&&<button onClick={()=>startEditTask(t)} style={{background:"transparent",border:`1px solid ${C.border2}`,color:C.muted,fontSize:10,padding:"2px 7px",borderRadius:5,cursor:"pointer"}}>수정</button>}
+                            {isAssignee&&<button onClick={()=>setDeleteTaskTarget(t)} style={{background:"transparent",border:"none",color:C.faint,fontSize:12,cursor:"pointer",padding:"2px 3px"}}>✕</button>}
+                          </div>
                         </div>
-                      </div>
+                      )}
                       {isMO&&<MemoPanel task={t} memo={memos[t.id]} isAssignee={isAssignee} onSave={content=>saveMemo(t.id,content)}/>}
                     </div>
                   );
                 })}
+                {/* 작업 추가 폼 */}
+                {addingTask===phase.id?(
+                  <div style={{padding:"10px 16px 10px 40px",borderBottom:`1px solid ${C.border}`,background:C.bg3}}>
+                    <div style={{display:"grid",gridTemplateColumns:"2fr 80px 80px 120px auto",gap:8,alignItems:"center"}}>
+                      <input autoFocus value={taskForm.name} onChange={e=>setTaskForm(p=>({...p,name:e.target.value}))}
+                        onKeyDown={e=>e.key==="Enter"&&addTask(phase.id)}
+                        placeholder="작업명 입력" style={{padding:"5px 8px",borderRadius:6,border:`1px solid ${C.accent}`,background:C.bg4,color:C.text,fontSize:12,outline:"none",width:"100%"}}/>
+                      <input value={taskForm.start_date} onChange={e=>setTaskForm(p=>({...p,start_date:e.target.value}))} placeholder="시작일" style={{padding:"5px 8px",borderRadius:6,border:`1px solid ${C.border2}`,background:C.bg4,color:C.text,fontSize:12,outline:"none"}}/>
+                      <input value={taskForm.end_date} onChange={e=>setTaskForm(p=>({...p,end_date:e.target.value}))} placeholder="종료일" style={{padding:"5px 8px",borderRadius:6,border:`1px solid ${C.border2}`,background:C.bg4,color:C.text,fontSize:12,outline:"none"}}/>
+                      <select value={taskForm.status} onChange={e=>setTaskForm(p=>({...p,status:e.target.value}))} style={{padding:"5px 8px",borderRadius:6,border:`1px solid ${C.border2}`,background:C.bg4,color:C.text,fontSize:12,outline:"none"}}>
+                        <option value="todo">예정</option>
+                        <option value="progress">진행중</option>
+                        <option value="done">완료</option>
+                        <option value="block">중단</option>
+                      </select>
+                      <div style={{display:"flex",gap:6}}>
+                        <button onClick={()=>addTask(phase.id)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:C.accent,color:"#0d0d0f",fontSize:11,fontWeight:700,cursor:"pointer"}}>추가</button>
+                        <button onClick={()=>{setAddingTask(null);setTaskForm({name:"",start_date:"",end_date:"",status:"todo"});}} style={{...Btn(),padding:"4px 10px",fontSize:11}}>취소</button>
+                      </div>
+                    </div>
+                  </div>
+                ):(
+                  <div style={{padding:"8px 16px 8px 40px"}}>
+                    <button onClick={()=>{setAddingTask(phase.id);setTaskForm({name:"",start_date:"",end_date:"",status:"todo"});}}
+                      style={{...Btn(C.muted),...{padding:"4px 12px",fontSize:11,borderStyle:"dashed"}}}>+ 내 작업 추가</button>
+                  </div>
+                )}
               </div>}
             </div>
           );
@@ -543,7 +644,7 @@ function WBSTab({user,profile,isPm}){
     </div>
   );
 }
- 
+
 /* ── 메인 앱 ── */
 function App(){
   const [user,setUser]=useState(null);
@@ -551,7 +652,7 @@ function App(){
   const [authLoading,setAuthLoading]=useState(true);
   const [isPm,setIsPm]=useState(false);
   const [showTeam,setShowTeam]=useState(false);
- 
+
   useEffect(()=>{
     sb.auth.getSession().then(({data:{session}})=>{
       if(session)loadProfile(session.user);
@@ -563,15 +664,15 @@ function App(){
     });
     return()=>subscription.unsubscribe();
   },[]);
- 
+
   const loadProfile=async(u)=>{
     const {data}=await sb.from("profiles").select("*").eq("id",u.id).single();
     setUser(u);setProfile(data);setIsPm(data?.is_pm||false);setAuthLoading(false);
   };
- 
+
   if(authLoading)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:C.bg}}><span className="spinner"/></div>);
   if(!user)return <LoginScreen onLogin={u=>loadProfile(u)}/>;
- 
+
   return(
     <div style={{background:C.bg,minHeight:"100vh",color:C.text,fontFamily:"DM Sans,sans-serif",fontSize:14,lineHeight:1.6}}>
       {showTeam&&isPm&&<TeamPanel onClose={()=>setShowTeam(false)}/>}
@@ -599,11 +700,10 @@ function App(){
     </div>
   );
 }
- 
+
 const container=document.getElementById("root");
 const root=ReactDOM.createRoot(container);
 root.render(React.createElement(App));
 </script>
 </body>
 </html>
- 
