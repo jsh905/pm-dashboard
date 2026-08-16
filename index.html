@@ -1,3 +1,76 @@
+
+Claude가 응답을 완료했습니다
+로그아웃하고 다시 로그인했어
+
+아직도 안 뜨면 코드 문제예요. profile?.is_pm 체크 로직을 확인해볼게요.
+
+
+파일 조회함, 명령 실행함
+파일 조회함, 명령 실행함
+코드는 맞아요. 문제는 loadProfile에서 프로필을 못 가져오고 있는 거예요. Supabase의 새 API 키(sb_publishable_) 방식이 RLS와 충돌하는 경우가 있어요. 아래 SQL로 RLS를 완전히 열어볼게요.
+
+
+명령 실행함, 파일 조회함
+명령 실행함, 파일 조회함
+코드는 맞는데 data가 null로 오고 있는 거예요. Supabase SQL Editor에서 이걸 실행해주세요.
+
+sql
+ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+이렇게 하면 RLS를 끄고 누구나 읽을 수 있게 돼요. 지금은 내부 팀용이라 이게 더 간단해요. 실행 후 로그아웃 → 다시 로그인해보세요!
+
+이것도 그럼 새로 열어서 복붙해?
+
+네, 맞아요! 새 탭 + 누르고 붙여넣고 Run 하면 돼요.
+
+
+메시지 접힘
+좋아요. 4번 먼저 제안할게요.
+
+4번 아이디어 — PM 삭제 시 일반 팀원보다 한 단계 더 추가하는 방식이 좋을 것 같아요. 예를 들면 이렇게요.
+
+일반 팀원 삭제 → "정말 삭제하시겠습니까?" → 삭제/아니오
+
+PM 삭제 → "이 멤버는 PM 권한을 가지고 있어요. PM을 삭제하면 해당 계정의 모든 관리 권한이 사라집니다. 정말 삭제하시겠습니까?" → PM 이름을 직접 입력해야 삭제 버튼 활성화 → 삭제/아니오
+
+이름 직접 입력 방식은 GitHub에서 저장소 삭제할 때 쓰는 방식이라 사용자들이 이미 익숙한 패턴이에요. 이 방향으로 진행할까요?
+
+그랭
+
+바로 수정할게요.
+
+
+2개의 파일 조회함
+2개의 파일 조회함
+구조 파악 완료. 이제 한 번에 다 수정할게요.
+
+
+명령 실행함, 파일 읽음
+명령 실행함, 파일 읽음
+수정 완료했어요. GitHub index.html에 교체해서 올려주세요.
+
+변경된 내용 정리예요.
+
+1. 눈 아이콘 — 로그인 화면 비밀번호, 팀원 추가 비밀번호 입력란 모두에 👁 아이콘이 생겼어요. 클릭하면 비밀번호가 보이고, 다시 클릭하면 숨겨져요.
+
+2. 팀원 수정 — 각 팀원 카드 오른쪽에 수정 버튼이 생겼어요. 클릭하면 카드가 인라인 편집 모드로 바뀌어서 이름, 직무, 팀, PM 권한을 바꿀 수 있어요.
+
+3. 삭제 확인 — 삭제 버튼(✕) 누르면 "정말 삭제하시겠습니까?" 모달이 떠요. 삭제 / 아니오 버튼으로 선택해요.
+
+4. PM 삭제 이중 확인 — PM 권한 가진 멤버를 삭제하려면 경고 문구와 함께 해당 PM의 이름을 직접 입력해야 삭제 버튼이 활성화돼요. 이름이 정확히 일치해야만 삭제 가능해요.
+
+
+Pm dashboard final
+코드 · HTML 
+
+
+
+
+
+
+Claude는 AI이며 실수할 수 있습니다. 응답을 다시 한번 확인해 주세요.
+
+
+Pm dashboard final · HTML
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -24,11 +97,11 @@ textarea,input,select{font-family:inherit;}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.3/babel.min.js"></script>
 <script type="text/babel">
 const {useState,useEffect,useRef}=React;
-
+ 
 const SUPA_URL="https://kabokfrmiwnhhkmxkwoo.supabase.co";
 const SUPA_KEY="sb_publishable_HjzKaCHMgSLjsGBu9hxPrw_Kbzu2Qo1";
 const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
-
+ 
 const C={bg:"#0d0d0f",bg2:"#141416",bg3:"#1a1a1e",bg4:"#222228",border:"rgba(255,255,255,0.07)",border2:"rgba(255,255,255,0.12)",text:"#f0f0f2",muted:"#8a8a99",faint:"#4a4a58",accent:"#c8f04a",accent2:"#7b6ef6",accent3:"#f06a6a",accent4:"#4af0c8"};
 const PCOLS=["#c8f04a","#7b6ef6","#4af0c8","#f0c44a","#f06a6a","#e879f9","#38bdf8"];
 const PHICONS=["📋","🎨","⚙️","🧪","🚀","📁","📌","🔧","💡","📊"];
@@ -38,7 +111,7 @@ const Btn=(color=C.muted,bg="transparent",bdr=C.border2)=>({padding:"5px 14px",b
 const bdg=(color,bg)=>({display:"inline-block",padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:500,background:bg,color,border:`1px solid ${color}44`});
 const aColors=["#7b6ef6","#c8f04a","#f06a6a","#4af0c8","#f0c44a","#e879f9","#38bdf8"];
 const nameColor=name=>aColors[Math.abs([...name].reduce((h,c)=>h*31+c.charCodeAt(0),0))%aColors.length];
-
+ 
 function StatusPill({status}){
   const [bg,col,label]=statusMap[status]||statusMap.todo;
   return <span style={{padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:500,background:bg,color:col}}>{label}</span>;
@@ -57,6 +130,21 @@ function ConfirmModal({message,onConfirm,onCancel}){
     </div>
   );
 }
+/* ── 비밀번호 입력 (눈 아이콘) ── */
+function PwInput({value,onChange,placeholder="비밀번호",onKeyDown,style={}}){
+  const [show,setShow]=useState(false);
+  return(
+    <div style={{position:"relative",width:"100%"}}>
+      <input type={show?"text":"password"} value={value} onChange={onChange} onKeyDown={onKeyDown} placeholder={placeholder}
+        style={{...style,paddingRight:38,width:"100%"}}/>
+      <button type="button" onClick={()=>setShow(p=>!p)}
+        style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",color:"#8a8a99",cursor:"pointer",fontSize:14,padding:0,lineHeight:1}}>
+        {show?"🙈":"👁"}
+      </button>
+    </div>
+  );
+}
+ 
 function InlineInput({value,onChange,onConfirm,onCancel,placeholder="이름 입력",width=200}){
   return(
     <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -66,7 +154,7 @@ function InlineInput({value,onChange,onConfirm,onCancel,placeholder="이름 입�
     </div>
   );
 }
-
+ 
 /* ── 로그인 화면 ── */
 function LoginScreen({onLogin}){
   const [email,setEmail]=useState("");
@@ -90,7 +178,7 @@ function LoginScreen({onLogin}){
         <div style={{fontSize:13,color:C.muted,marginBottom:"1.5rem"}}>팀 계정으로 로그인하세요</div>
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:"1rem"}}>
           <input type="email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()} placeholder="이메일" style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${C.border2}`,background:C.bg4,color:C.text,fontSize:13,outline:"none"}}/>
-          <input type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()} placeholder="비밀번호" style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${C.border2}`,background:C.bg4,color:C.text,fontSize:13,outline:"none"}}/>
+          <PwInput value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()} placeholder="비밀번호" style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${C.border2}`,background:C.bg4,color:C.text,fontSize:13,outline:"none"}}/>
         </div>
         {error&&<div style={{fontSize:12,color:C.accent3,marginBottom:"0.75rem"}}>{error}</div>}
         <button onClick={login} disabled={loading} style={{width:"100%",padding:"11px",borderRadius:9,border:"none",background:C.accent,color:"#0d0d0f",fontSize:13,fontWeight:700,cursor:loading?"not-allowed":"pointer",opacity:loading?0.7:1}}>
@@ -101,17 +189,24 @@ function LoginScreen({onLogin}){
     </div>
   );
 }
-
+ 
 /* ── 팀원 관리 패널 ── */
 function TeamPanel({onClose}){
   const [members,setMembers]=useState([]);
   const [loading,setLoading]=useState(true);
   const [adding,setAdding]=useState(false);
+  const [editingId,setEditingId]=useState(null);
   const [form,setForm]=useState({email:"",name:"",role:"",team:"",is_pm:false,password:""});
+  const [editForm,setEditForm]=useState({name:"",role:"",team:"",is_pm:false});
   const [saving,setSaving]=useState(false);
   const [err,setErr]=useState("");
+  // 삭제 확인 모달 상태
+  const [deleteTarget,setDeleteTarget]=useState(null); // {id, name, is_pm}
+  const [deleteConfirmName,setDeleteConfirmName]=useState("");
+ 
   useEffect(()=>{loadMembers();},[]);
   const loadMembers=async()=>{setLoading(true);const {data}=await sb.from("profiles").select("*").order("name");setMembers(data||[]);setLoading(false);};
+ 
   const addMember=async()=>{
     if(!form.email||!form.name||!form.role||!form.team||!form.password){setErr("모든 항목을 입력해주세요.");return;}
     setSaving(true);setErr("");
@@ -121,11 +216,54 @@ function TeamPanel({onClose}){
     if(profErr){setErr("프로필 저장 실패: "+profErr.message);setSaving(false);return;}
     setForm({email:"",name:"",role:"",team:"",is_pm:false,password:""});setAdding(false);await loadMembers();setSaving(false);
   };
-  const deleteMember=async(id)=>{await sb.from("profiles").delete().eq("id",id);await loadMembers();};
+ 
+  const startEdit=m=>{setEditingId(m.id);setEditForm({name:m.name,role:m.role,team:m.team,is_pm:m.is_pm});};
+  const saveEdit=async()=>{
+    if(!editForm.name||!editForm.role||!editForm.team){return;}
+    await sb.from("profiles").update({name:editForm.name,role:editForm.role,team:editForm.team,is_pm:editForm.is_pm}).eq("id",editingId);
+    setEditingId(null);await loadMembers();
+  };
+ 
+  const confirmDelete=async()=>{
+    await sb.from("profiles").delete().eq("id",deleteTarget.id);
+    setDeleteTarget(null);setDeleteConfirmName("");await loadMembers();
+  };
+ 
   const fs={padding:"8px 12px",borderRadius:8,border:`1px solid ${C.border2}`,background:C.bg4,color:C.text,fontSize:12,outline:"none",width:"100%"};
+  const canDelete=deleteTarget?.is_pm ? deleteConfirmName===deleteTarget?.name : true;
+ 
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{background:C.bg2,border:`1px solid ${C.border2}`,borderRadius:18,width:560,maxHeight:"80vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      {/* 삭제 확인 모달 */}
+      {deleteTarget&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{background:C.bg2,border:`1px solid ${C.border2}`,borderRadius:16,padding:"2rem",maxWidth:400,width:"90%"}}>
+            <div style={{fontSize:15,fontWeight:700,color:C.text,marginBottom:"0.75rem",fontFamily:"Epilogue,sans-serif"}}>
+              {deleteTarget.is_pm?"PM 멤버 삭제":"팀원 삭제"}
+            </div>
+            {deleteTarget.is_pm?(
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.8,marginBottom:"1.25rem"}}>
+                <span style={{color:C.accent3,fontWeight:600}}>{deleteTarget.name}</span>님은 PM 권한을 가지고 있어요.<br/>
+                PM을 삭제하면 해당 계정의 모든 관리 권한이 사라집니다.<br/><br/>
+                정말 삭제하려면 아래에 <strong style={{color:C.text}}>{deleteTarget.name}</strong>을 입력하세요.
+                <input value={deleteConfirmName} onChange={e=>setDeleteConfirmName(e.target.value)}
+                  placeholder={deleteTarget.name} style={{...fs,marginTop:10}}/>
+              </div>
+            ):(
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.8,marginBottom:"1.25rem"}}>
+                <span style={{color:C.text,fontWeight:600}}>{deleteTarget.name}</span>님을 정말 삭제하시겠습니까?
+              </div>
+            )}
+            <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+              <button onClick={()=>{setDeleteTarget(null);setDeleteConfirmName("");}} style={{...Btn(),padding:"8px 20px",fontSize:13}}>아니오</button>
+              <button onClick={confirmDelete} disabled={!canDelete}
+                style={{padding:"8px 20px",borderRadius:8,border:"none",background:canDelete?C.accent3:"#444",color:"#fff",fontSize:13,fontWeight:600,cursor:canDelete?"pointer":"not-allowed"}}>삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
+ 
+      <div style={{background:C.bg2,border:`1px solid ${C.border2}`,borderRadius:18,width:580,maxHeight:"80vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"1.25rem 1.5rem",borderBottom:`1px solid ${C.border}`}}>
           <div style={{fontFamily:"Epilogue,sans-serif",fontSize:16,fontWeight:700,color:C.text}}>팀원 관리</div>
           <button onClick={onClose} style={{background:"transparent",border:"none",color:C.faint,fontSize:18,cursor:"pointer"}}>✕</button>
@@ -134,13 +272,31 @@ function TeamPanel({onClose}){
           {loading?<div style={{color:C.muted,fontSize:13}}>불러오는 중...</div>:
             <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:"1.25rem"}}>
               {members.map(m=>(
-                <div key={m.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:C.bg3,borderRadius:10,border:`1px solid ${C.border}`}}>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:C.accent+"22",color:C.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0}}>{m.name[0]}</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:500,color:C.text,display:"flex",alignItems:"center",gap:6}}>{m.name}{m.is_pm&&<span style={bdg(C.accent,"rgba(200,240,74,0.1)")}>PM</span>}</div>
-                    <div style={{fontSize:11,color:C.muted}}>{m.role} · {m.team}</div>
-                  </div>
-                  <button onClick={()=>deleteMember(m.id)} style={{background:"transparent",border:"none",color:C.faint,fontSize:13,cursor:"pointer"}}>✕</button>
+                <div key={m.id} style={{background:C.bg3,borderRadius:10,border:`1px solid ${editingId===m.id?C.accent:C.border}`,overflow:"hidden"}}>
+                  {editingId===m.id?(
+                    <div style={{padding:"12px 14px"}}>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                        <input placeholder="이름" value={editForm.name} onChange={e=>setEditForm(p=>({...p,name:e.target.value}))} style={fs}/>
+                        <input placeholder="직무" value={editForm.role} onChange={e=>setEditForm(p=>({...p,role:e.target.value}))} style={fs}/>
+                        <input placeholder="팀" value={editForm.team} onChange={e=>setEditForm(p=>({...p,team:e.target.value}))} style={fs}/>
+                        <label style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:C.muted,cursor:"pointer"}}><input type="checkbox" checked={editForm.is_pm} onChange={e=>setEditForm(p=>({...p,is_pm:e.target.checked}))}/>PM 권한</label>
+                      </div>
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={saveEdit} style={{...Btn(C.accent,"transparent",C.accent),padding:"5px 14px",fontSize:12,fontWeight:600}}>저장</button>
+                        <button onClick={()=>setEditingId(null)} style={{...Btn(),padding:"5px 12px",fontSize:12}}>취소</button>
+                      </div>
+                    </div>
+                  ):(
+                    <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px"}}>
+                      <div style={{width:32,height:32,borderRadius:"50%",background:C.accent+"22",color:C.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0}}>{m.name[0]}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:500,color:C.text,display:"flex",alignItems:"center",gap:6}}>{m.name}{m.is_pm&&<span style={bdg(C.accent,"rgba(200,240,74,0.1)")}>PM</span>}</div>
+                        <div style={{fontSize:11,color:C.muted}}>{m.role} · {m.team}</div>
+                      </div>
+                      <button onClick={()=>startEdit(m)} style={{background:"transparent",border:`1px solid ${C.border2}`,color:C.muted,fontSize:11,padding:"3px 10px",borderRadius:6,cursor:"pointer"}}>수정</button>
+                      <button onClick={()=>setDeleteTarget({id:m.id,name:m.name,is_pm:m.is_pm})} style={{background:"transparent",border:"none",color:C.faint,fontSize:13,cursor:"pointer",marginLeft:4}}>✕</button>
+                    </div>
+                  )}
                 </div>
               ))}
               {members.length===0&&<div style={{fontSize:13,color:C.faint}}>등록된 팀원이 없어요.</div>}
@@ -153,7 +309,7 @@ function TeamPanel({onClose}){
                 <input placeholder="직무 (예: UX 디자이너)" value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))} style={fs}/>
                 <input placeholder="팀 (예: 디자인팀)" value={form.team} onChange={e=>setForm(p=>({...p,team:e.target.value}))} style={fs}/>
                 <input type="email" placeholder="이메일" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} style={fs}/>
-                <input type="password" placeholder="초기 비밀번호" value={form.password} onChange={e=>setForm(p=>({...p,password:e.target.value}))} style={fs}/>
+                <PwInput value={form.password} onChange={e=>setForm(p=>({...p,password:e.target.value}))} placeholder="초기 비밀번호" style={fs}/>
                 <label style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:C.muted,cursor:"pointer"}}><input type="checkbox" checked={form.is_pm} onChange={e=>setForm(p=>({...p,is_pm:e.target.checked}))}/>PM 권한 부여</label>
               </div>
               {err&&<div style={{fontSize:12,color:C.accent3,marginBottom:8}}>{err}</div>}
@@ -170,7 +326,7 @@ function TeamPanel({onClose}){
     </div>
   );
 }
-
+ 
 /* ── 메모 패널 ── */
 function MemoPanel({task,memo,isAssignee,onSave}){
   const [val,setVal]=useState(memo?.content||"");
@@ -201,7 +357,7 @@ function MemoPanel({task,memo,isAssignee,onSave}){
     </div>
   );
 }
-
+ 
 /* ── WBS 탭 ── */
 function WBSTab({user,profile,isPm}){
   const [projects,setProjects]=useState([]);
@@ -223,10 +379,10 @@ function WBSTab({user,profile,isPm}){
   const [renamePhVal,setRenamePhVal]=useState("");
   const dragIdx=useRef(null);
   const [dragOver,setDragOver]=useState(null);
-
+ 
   useEffect(()=>{loadProjects();},[]);
   useEffect(()=>{if(activePId)loadPhases();},[activePId]);
-
+ 
   const loadProjects=async()=>{
     const {data}=await sb.from("projects").select("*").order("created_at");
     setProjects(data||[]);
@@ -249,7 +405,7 @@ function WBSTab({user,profile,isPm}){
     }
     setLoading(false);
   };
-
+ 
   const addProj=async()=>{
     if(!newProjName.trim()){setAddingProj(false);setNewProjName("");return;}
     const {data}=await sb.from("projects").insert({name:newProjName.trim(),color:PCOLS[projects.length%PCOLS.length]}).select().single();
@@ -272,7 +428,7 @@ function WBSTab({user,profile,isPm}){
       setConfirmModal(null);
     }});
   };
-
+ 
   const addPhase=async()=>{
     if(!newPhaseName.trim()){setAddingPhase(false);setNewPhaseName("");return;}
     const oi=phases.length;
@@ -295,7 +451,7 @@ function WBSTab({user,profile,isPm}){
     await sb.from("phases").update({title:newTitle}).eq("id",renamingPhId);
     setPhases(prev=>prev.map(p=>p.id===renamingPhId?{...p,title:newTitle}:p));setRenamingPhId(null);
   };
-
+ 
   const onDragStart=(e,idx)=>{dragIdx.current=idx;e.dataTransfer.effectAllowed="move";};
   const onDragOver=(e,idx)=>{e.preventDefault();if(dragIdx.current!==idx)setDragOver(idx);};
   const onDrop=async(e,toIdx)=>{
@@ -308,7 +464,7 @@ function WBSTab({user,profile,isPm}){
     dragIdx.current=null;setDragOver(null);
   };
   const onDragEnd=()=>{dragIdx.current=null;setDragOver(null);};
-
+ 
   const toggleDone=async(t)=>{
     const newDone=!t.is_done;
     const newStatus=newDone?"done":t.status==="done"?"todo":t.status;
@@ -325,14 +481,14 @@ function WBSTab({user,profile,isPm}){
       if(data)setMemos(prev=>({...prev,[taskId]:data}));
     }
   };
-
+ 
   const phaseTasks=ph=>tasks.filter(t=>t.phase_id===ph.id);
   const total=tasks.length,doneT=tasks.filter(t=>t.is_done).length;
   const progT=tasks.filter(t=>!t.is_done&&t.status==="progress").length;
   const blockT=tasks.filter(t=>!t.is_done&&t.status==="block").length;
-
+ 
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:300,gap:12,color:C.muted}}><span className="spinner"/>데이터 불러오는 중...</div>);
-
+ 
   return(
     <div>
       {confirmModal&&<ConfirmModal message={confirmModal.message} onConfirm={confirmModal.onConfirm} onCancel={()=>setConfirmModal(null)}/>}
@@ -340,7 +496,7 @@ function WBSTab({user,profile,isPm}){
         <div style={{fontFamily:"Epilogue,sans-serif",fontSize:26,fontWeight:800,color:C.text,letterSpacing:"-0.02em"}}>WBS</div>
         <span style={bdg(C.accent4,"rgba(74,240,200,0.12)")}>진행중</span>
       </div>
-
+ 
       {/* 프로젝트 탭 */}
       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:"1.5rem",flexWrap:"wrap",padding:"10px 14px",background:C.bg3,borderRadius:12,border:`1px solid ${C.border}`}}>
         <span style={{fontSize:11,color:C.faint,letterSpacing:"0.04em",textTransform:"uppercase",marginRight:4,flexShrink:0}}>프로젝트</span>
@@ -359,7 +515,7 @@ function WBSTab({user,profile,isPm}){
         {isPm&&addingProj&&<InlineInput value={newProjName} onChange={setNewProjName} onConfirm={addProj} onCancel={()=>{setAddingProj(false);setNewProjName("");}} placeholder="프로젝트 이름 입력" width={180}/>}
         {projects.length===0&&!addingProj&&<span style={{fontSize:12,color:C.faint}}>프로젝트가 없어요. PM이 추가해주세요.</span>}
       </div>
-
+ 
       {/* 요약 */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:"0.75rem",marginBottom:"1.5rem"}}>
         {[["전체",total+"개",C.text],["완료",doneT+"개",C.accent],["진행중",progT+"개",C.accent2],["중단",blockT+"개",C.accent3],["완료율",total?Math.round(doneT/total*100)+"%":"0%",C.accent]].map(([l,v,c])=>(
@@ -369,7 +525,7 @@ function WBSTab({user,profile,isPm}){
           </div>
         ))}
       </div>
-
+ 
       {/* 컨트롤 */}
       <div style={{display:"flex",gap:8,marginBottom:"1.25rem",alignItems:"center",flexWrap:"wrap"}}>
         <button onClick={()=>setOpenPhases(new Set(phases.map(p=>p.id)))} style={{...Btn(),padding:"6px 14px"}}>전체 펼치기</button>
@@ -382,12 +538,12 @@ function WBSTab({user,profile,isPm}){
           ))}
         </div>
       </div>
-
+ 
       {/* 컬럼 헤더 */}
       <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 80px 80px 80px 36px",gap:12,padding:"8px 16px",fontSize:11,color:C.faint,letterSpacing:"0.04em",textTransform:"uppercase",borderBottom:`1px solid ${C.border}`,background:C.bg2,borderRadius:"8px 8px 0 0"}}>
         {["작업명","담당자","팀 / 직무","시작일","종료일","상태",""].map(h=><div key={h}>{h}</div>)}
       </div>
-
+ 
       {/* 페이즈 */}
       <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6}}>
         {phases.length===0&&<div style={{padding:"2rem",textAlign:"center",color:C.faint,fontSize:13}}>카테고리가 없어요. PM이 추가해주세요.</div>}
@@ -460,7 +616,7 @@ function WBSTab({user,profile,isPm}){
     </div>
   );
 }
-
+ 
 /* ── 메인 앱 ── */
 function App(){
   const [user,setUser]=useState(null);
@@ -468,7 +624,7 @@ function App(){
   const [authLoading,setAuthLoading]=useState(true);
   const [isPm,setIsPm]=useState(false);
   const [showTeam,setShowTeam]=useState(false);
-
+ 
   useEffect(()=>{
     sb.auth.getSession().then(({data:{session}})=>{
       if(session)loadProfile(session.user);
@@ -480,15 +636,15 @@ function App(){
     });
     return()=>subscription.unsubscribe();
   },[]);
-
+ 
   const loadProfile=async(u)=>{
     const {data}=await sb.from("profiles").select("*").eq("id",u.id).single();
     setUser(u);setProfile(data);setIsPm(data?.is_pm||false);setAuthLoading(false);
   };
-
+ 
   if(authLoading)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:C.bg}}><span className="spinner"/></div>);
   if(!user)return <LoginScreen onLogin={u=>loadProfile(u)}/>;
-
+ 
   return(
     <div style={{background:C.bg,minHeight:"100vh",color:C.text,fontFamily:"DM Sans,sans-serif",fontSize:14,lineHeight:1.6}}>
       {showTeam&&isPm&&<TeamPanel onClose={()=>setShowTeam(false)}/>}
@@ -516,10 +672,11 @@ function App(){
     </div>
   );
 }
-
+ 
 const container=document.getElementById("root");
 const root=ReactDOM.createRoot(container);
 root.render(React.createElement(App));
 </script>
 </body>
 </html>
+ 
