@@ -29,6 +29,62 @@ const SUPA_URL="https://kabokfrmiwnhhkmxkwoo.supabase.co";
 const SUPA_KEY="sb_publishable_HjzKaCHMgSLjsGBu9hxPrw_Kbzu2Qo1";
 const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
+/* ── 데모 모드 샘플 데이터 ── */
+const IS_DEMO = new URLSearchParams(window.location.search).get("demo") === "true";
+const DEMO_USER = {id:"demo-user",email:"guest@demo.com"};
+const DEMO_PROFILE = {id:"demo-user",name:"Guest",role:"뷰어",team:"데모",is_pm:false};
+const DEMO_PROJECTS = [{id:"dp1",name:"신규 서비스 런칭",color:"#c8f04a"},{id:"dp2",name:"리브랜딩 프로젝트",color:"#7b6ef6"}];
+const DEMO_PHASES = {
+  dp1:[
+    {id:"dph1",project_id:"dp1",title:"1. 기획 및 리서치",color:"#c8f04a",icon:"📋",order_idx:0},
+    {id:"dph2",project_id:"dp1",title:"2. UX/UI 설계",color:"#7b6ef6",icon:"🎨",order_idx:1},
+    {id:"dph3",project_id:"dp1",title:"3. 개발",color:"#4af0c8",icon:"⚙️",order_idx:2},
+    {id:"dph4",project_id:"dp1",title:"4. QA 및 테스트",color:"#f0c44a",icon:"🧪",order_idx:3},
+    {id:"dph5",project_id:"dp1",title:"5. 출시 준비",color:"#f06a6a",icon:"🚀",order_idx:4},
+  ],
+  dp2:[
+    {id:"dph6",project_id:"dp2",title:"1. 브랜드 리서치",color:"#c8f04a",icon:"🔍",order_idx:0},
+    {id:"dph7",project_id:"dp2",title:"2. 디자인 시스템",color:"#7b6ef6",icon:"🎨",order_idx:1},
+  ]
+};
+const DEMO_TASKS = {
+  dph1:[
+    {id:"dt1",phase_id:"dph1",name:"시장 조사 및 경쟁사 분석",assignee_id:"u1",is_done:true,status:"done",start_date:"04/01",end_date:"04/07",order_idx:0,profiles:{name:"김민지",role:"서비스 기획자",team:"Product팀"}},
+    {id:"dt2",phase_id:"dph1",name:"사용자 인터뷰 (10명)",assignee_id:"u1",is_done:true,status:"done",start_date:"04/08",end_date:"04/14",order_idx:1,profiles:{name:"김민지",role:"서비스 기획자",team:"Product팀"}},
+    {id:"dt3",phase_id:"dph1",name:"PRD 초안 작성",assignee_id:"u2",is_done:true,status:"done",start_date:"04/15",end_date:"04/21",order_idx:2,profiles:{name:"이성현",role:"PM",team:"Product팀"}},
+    {id:"dt4",phase_id:"dph1",name:"스테이크홀더 리뷰",assignee_id:"u3",is_done:true,status:"done",start_date:"04/22",end_date:"04/25",order_idx:3,profiles:{name:"박지우",role:"프로덕트 오너",team:"Product팀"}},
+  ],
+  dph2:[
+    {id:"dt5",phase_id:"dph2",name:"정보 구조(IA) 설계",assignee_id:"u4",is_done:true,status:"done",start_date:"04/21",end_date:"04/28",order_idx:0,profiles:{name:"최유나",role:"UX 디자이너",team:"디자인팀"}},
+    {id:"dt6",phase_id:"dph2",name:"핵심 플로우 와이어프레임",assignee_id:"u4",is_done:true,status:"done",start_date:"04/29",end_date:"05/09",order_idx:1,profiles:{name:"최유나",role:"UX 디자이너",team:"디자인팀"}},
+    {id:"dt7",phase_id:"dph2",name:"디자인 시스템 구축",assignee_id:"u4",is_done:false,status:"progress",start_date:"05/06",end_date:"05/16",order_idx:2,profiles:{name:"최유나",role:"UX 디자이너",team:"디자인팀"}},
+    {id:"dt8",phase_id:"dph2",name:"핵심 화면 UI 디자인",assignee_id:"u5",is_done:false,status:"progress",start_date:"05/12",end_date:"05/23",order_idx:3,profiles:{name:"오준혁",role:"UI 디자이너",team:"디자인팀"}},
+  ],
+  dph3:[
+    {id:"dt9",phase_id:"dph3",name:"개발 환경 셋업",assignee_id:"u6",is_done:false,status:"progress",start_date:"05/12",end_date:"05/16",order_idx:0,profiles:{name:"장태양",role:"백엔드 개발자",team:"개발팀"}},
+    {id:"dt10",phase_id:"dph3",name:"핵심 기능 백엔드 API",assignee_id:"u7",is_done:false,status:"block",start_date:"05/19",end_date:"06/13",order_idx:1,profiles:{name:"임서연",role:"백엔드 개발자",team:"개발팀"}},
+    {id:"dt11",phase_id:"dph3",name:"프론트엔드 UI 구현",assignee_id:"u8",is_done:false,status:"todo",start_date:"05/26",end_date:"06/13",order_idx:2,profiles:{name:"정민우",role:"프론트엔드 개발자",team:"개발팀"}},
+  ],
+  dph4:[
+    {id:"dt12",phase_id:"dph4",name:"테스트 케이스 작성",assignee_id:"u9",is_done:false,status:"todo",start_date:"06/09",end_date:"06/13",order_idx:0,profiles:{name:"한소희",role:"QA 엔지니어",team:"QA팀"}},
+  ],
+  dph5:[
+    {id:"dt13",phase_id:"dph5",name:"마케팅 콘텐츠 제작",assignee_id:"u10",is_done:false,status:"todo",start_date:"06/16",end_date:"06/27",order_idx:0,profiles:{name:"윤하은",role:"마케터",team:"마케팅팀"}},
+    {id:"dt14",phase_id:"dph5",name:"공식 런칭",assignee_id:"u3",is_done:false,status:"todo",start_date:"07/14",end_date:"07/14",order_idx:1,profiles:{name:"박지우",role:"프로덕트 오너",team:"Product팀"}},
+  ],
+  dph6:[
+    {id:"dt15",phase_id:"dph6",name:"경쟁사 브랜드 분석",assignee_id:"u1",is_done:true,status:"done",start_date:"03/01",end_date:"03/10",order_idx:0,profiles:{name:"김민지",role:"서비스 기획자",team:"Product팀"}},
+    {id:"dt16",phase_id:"dph6",name:"사용자 인식 조사",assignee_id:"u1",is_done:false,status:"progress",start_date:"03/11",end_date:"03/20",order_idx:1,profiles:{name:"김민지",role:"서비스 기획자",team:"Product팀"}},
+  ],
+  dph7:[
+    {id:"dt17",phase_id:"dph7",name:"컬러 시스템 정의",assignee_id:"u4",is_done:false,status:"todo",start_date:"03/21",end_date:"04/05",order_idx:0,profiles:{name:"최유나",role:"UX 디자이너",team:"디자인팀"}},
+  ],
+};
+const DEMO_MEMOS = {
+  dt2:{id:"dm1",task_id:"dt2",content:"총 10명 인터뷰 완료. 주요 pain point: 기존 대시보드 UX 복잡성, 모바일 지원 부재. 다음 스프린트에 반영 예정."},
+  dt10:{id:"dm2",task_id:"dt10",content:"인증 모듈 의존성 문제로 중단 상태. 장태양님 인증 기능 완료 후 착수 가능. 예상 해소 시점 5/30."},
+};
+
 const C={bg:"#0d0d0f",bg2:"#141416",bg3:"#1a1a1e",bg4:"#222228",border:"rgba(255,255,255,0.07)",border2:"rgba(255,255,255,0.12)",text:"#f0f0f2",muted:"#8a8a99",faint:"#4a4a58",accent:"#c8f04a",accent2:"#7b6ef6",accent3:"#f06a6a",accent4:"#4af0c8"};
 const PCOLS=["#c8f04a","#7b6ef6","#4af0c8","#f0c44a","#f06a6a","#e879f9","#38bdf8"];
 const PHICONS=["📋","🎨","⚙️","🧪","🚀","📁","📌","🔧","💡","📊"];
@@ -317,12 +373,24 @@ function WBSTab({user,profile,isPm}){
   useEffect(()=>{if(activePId)loadPhases();},[activePId]);
 
   const loadProjects=async()=>{
+    if(IS_DEMO){
+      setProjects(DEMO_PROJECTS);setActivePId(DEMO_PROJECTS[0].id);return;
+    }
     const {data}=await sb.from("projects").select("*").order("created_at");
     setProjects(data||[]);
     if(data&&data.length>0)setActivePId(data[0].id);
     else setLoading(false);
   };
   const loadPhases=async()=>{
+    if(IS_DEMO){
+      const phData=DEMO_PHASES[activePId]||[];
+      setPhases(phData);
+      setOpenPhases(new Set(phData.slice(0,3).map(p=>p.id)));
+      const allTasks=phData.flatMap(ph=>DEMO_TASKS[ph.id]||[]);
+      setTasks(allTasks);
+      setMemos({...DEMO_MEMOS});
+      setLoading(false);return;
+    }
     setLoading(true);
     const {data:phData}=await sb.from("phases").select("*").eq("project_id",activePId).order("order_idx");
     setPhases(phData||[]);
@@ -600,8 +668,8 @@ function WBSTab({user,profile,isPm}){
                           <div><StatusPill status={t.is_done?"done":t.status}/></div>
                           <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"flex-end"}}>
                             <button onClick={()=>setOpenMemos(prev=>{const n=new Set(prev);n.has(t.id)?n.delete(t.id):n.add(t.id);return n;})} title={hasMemo?"메모 있음":"메모 없음"} style={{background:"transparent",border:"none",color:hasMemo?C.accent:C.faint,fontSize:15,cursor:"pointer",padding:"2px 4px",borderRadius:4}}>🗒</button>
-                            {isAssignee&&<button onClick={()=>startEditTask(t)} style={{background:"transparent",border:`1px solid ${C.border2}`,color:C.muted,fontSize:10,padding:"2px 7px",borderRadius:5,cursor:"pointer"}}>수정</button>}
-                            {isAssignee&&<button onClick={()=>setDeleteTaskTarget(t)} style={{background:"transparent",border:"none",color:C.faint,fontSize:12,cursor:"pointer",padding:"2px 3px"}}>✕</button>}
+                            {!IS_DEMO&&isAssignee&&<button onClick={()=>startEditTask(t)} style={{background:"transparent",border:`1px solid ${C.border2}`,color:C.muted,fontSize:10,padding:"2px 7px",borderRadius:5,cursor:"pointer"}}>수정</button>}
+                            {!IS_DEMO&&isAssignee&&<button onClick={()=>setDeleteTaskTarget(t)} style={{background:"transparent",border:"none",color:C.faint,fontSize:12,cursor:"pointer",padding:"2px 3px"}}>✕</button>}
                           </div>
                         </div>
                       )}
@@ -632,8 +700,8 @@ function WBSTab({user,profile,isPm}){
                   </div>
                 ):(
                   <div style={{padding:"8px 16px 8px 40px"}}>
-                    <button onClick={()=>{setAddingTask(phase.id);setTaskForm({name:"",start_date:"",end_date:"",status:"todo"});}}
-                      style={{...Btn(C.muted),...{padding:"4px 12px",fontSize:11,borderStyle:"dashed"}}}>+ 내 작업 추가</button>
+                    {!IS_DEMO&&<button onClick={()=>{setAddingTask(phase.id);setTaskForm({name:"",start_date:"",end_date:"",status:"todo"});}}
+                      style={{...Btn(C.muted),...{padding:"4px 12px",fontSize:11,borderStyle:"dashed"}}}>+ 내 작업 추가</button>}
                   </div>
                 )}
               </div>}
@@ -717,6 +785,7 @@ function App(){
   const [showMyProfile,setShowMyProfile]=useState(false);
 
   useEffect(()=>{
+    if(IS_DEMO){setUser(DEMO_USER);setProfile(DEMO_PROFILE);setAuthLoading(false);return;}
     sb.auth.getSession().then(({data:{session}})=>{
       if(session)loadProfile(session.user);
       else setAuthLoading(false);
@@ -743,19 +812,22 @@ function App(){
       <nav style={{position:"sticky",top:0,zIndex:100,background:"rgba(13,13,15,0.92)",backdropFilter:"blur(12px)",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 2rem",height:56}}>
         <div style={{display:"flex",alignItems:"center",gap:10,fontFamily:"Epilogue,sans-serif",fontSize:15,fontWeight:700,letterSpacing:"0.04em",color:C.text}}>
           <div style={{width:8,height:8,borderRadius:"50%",background:C.accent,animation:"pulse 2s ease-in-out infinite"}}/>PM 협업 대시보드
+          {IS_DEMO&&<span style={{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20,background:"rgba(123,110,246,0.15)",color:C.accent2,border:`1px solid ${C.accent2}44`,letterSpacing:"0.06em"}}>DEMO</span>}
         </div>
         <div style={{display:"flex",gap:2,background:C.bg3,borderRadius:10,padding:4,border:`1px solid ${C.border}`}}>
           <button style={{padding:"6px 18px",borderRadius:7,fontSize:13,fontWeight:500,color:C.text,background:C.bg4,border:"none",cursor:"pointer"}}>WBS</button>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          {isPm&&<button onClick={()=>setShowTeam(true)} style={{...Btn(C.accent4,"transparent",C.accent4),padding:"5px 12px"}}>팀원 관리</button>}
-          {isPm&&<button onClick={()=>setIsPm(p=>!p)} style={{padding:"5px 14px",borderRadius:8,fontSize:12,cursor:"pointer",fontWeight:600,border:`1px solid ${C.accent}`,background:"rgba(200,240,74,0.1)",color:C.accent}}>PM 편집 중 ●</button>}
-          {!isPm&&profile?.is_pm&&<button onClick={()=>setIsPm(true)} style={{padding:"5px 14px",borderRadius:8,fontSize:12,cursor:"pointer",border:`1px solid ${C.border2}`,background:"transparent",color:C.muted}}>PM 편집 모드</button>}
-          <button onClick={()=>setShowMyProfile(true)} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 10px",background:C.bg3,borderRadius:8,border:`1px solid ${C.border}`,cursor:"pointer"}} title="내 정보 수정">
-            <div style={{width:20,height:20,borderRadius:"50%",background:C.accent+"22",color:C.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700}}>{profile?.name?.[0]||user.email[0].toUpperCase()}</div>
-            <span style={{fontSize:12,color:C.muted}}>{profile?.name||user.email}</span>
-          </button>
-          <button onClick={()=>sb.auth.signOut()} style={{...Btn(),padding:"5px 12px",fontSize:12}}>로그아웃</button>
+          {!IS_DEMO&&isPm&&<button onClick={()=>setShowTeam(true)} style={{...Btn(C.accent4,"transparent",C.accent4),padding:"5px 12px"}}>팀원 관리</button>}
+          {!IS_DEMO&&isPm&&<button onClick={()=>setIsPm(p=>!p)} style={{padding:"5px 14px",borderRadius:8,fontSize:12,cursor:"pointer",fontWeight:600,border:`1px solid ${C.accent}`,background:"rgba(200,240,74,0.1)",color:C.accent}}>PM 편집 중 ●</button>}
+          {!IS_DEMO&&!isPm&&profile?.is_pm&&<button onClick={()=>setIsPm(true)} style={{padding:"5px 14px",borderRadius:8,fontSize:12,cursor:"pointer",border:`1px solid ${C.border2}`,background:"transparent",color:C.muted}}>PM 편집 모드</button>}
+          <div style={{display:"flex",alignItems:"center",gap:8,padding:"4px 10px",background:C.bg3,borderRadius:8,border:`1px solid ${C.border}`,cursor:IS_DEMO?"default":"pointer"}}
+            onClick={()=>!IS_DEMO&&setShowMyProfile(true)} title={IS_DEMO?"데모 계정":"내 정보 수정"}>
+            <div style={{width:20,height:20,borderRadius:"50%",background:C.accent2+"22",color:C.accent2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700}}>{IS_DEMO?"G":(profile?.name?.[0]||user.email[0].toUpperCase())}</div>
+            <span style={{fontSize:12,color:C.muted}}>{IS_DEMO?"데모 계정":(profile?.name||user.email)}</span>
+          </div>
+          {!IS_DEMO&&<button onClick={()=>sb.auth.signOut()} style={{...Btn(),padding:"5px 12px",fontSize:12}}>로그아웃</button>}
+          {IS_DEMO&&<a href={window.location.pathname} style={{...Btn(),padding:"5px 12px",fontSize:12,textDecoration:"none",display:"inline-block"}}>로그인하기</a>}
         </div>
       </nav>
       <div style={{maxWidth:1100,margin:"0 auto",padding:"2rem"}}>
